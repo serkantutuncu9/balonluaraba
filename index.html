@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style type="text/css">
+        :root {
+            --ana-renk: #0f111a;
+            --kart-bg: #161925;
+            --vurgu: #00f2ff;
+            --altin: #ffd700;
+            --metin: #e0e0e0;
+            --beyaz: #ffffff;
+            --status-color: #00ff88;
+            --gold-gradient: linear-gradient(90deg, #b8860b 0%, #ffd700 25%, #ffface 50%, #ffd700 75%, #b8860b 100%);
+            --header-gradient: linear-gradient(90deg, #00d2ff 0%, #3a7bd5 50%, #00d2ff 100%);
+        }
+
+        body.light-theme {
+            --ana-renk: #f0f4f8 !important;
+            --kart-bg: #ffffff !important;
+            --vurgu: #000080 !important;
+            --metin: #000033 !important;
+            --altin: #a67c00 !important;
+            --beyaz: #000033 !important;
+            --status-color: #000080 !important;
+        }
+
+        * { transition: background-color 0.4s ease, color 0.4s ease; box-sizing: border-box; }
+
+        body { 
+            background-color: var(--ana-renk); 
+            margin: 0; padding: 0;
+            font-family: 'Segoe UI', sans-serif;
+            color: var(--metin);
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .board-container { display: flex; flex-direction: column; height: 100vh; width: 100vw; }
+
+        .header {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 15px 40px;
+            background: rgba(0,0,0,0.3);
+            border-bottom: 2px solid rgba(255, 215, 0, 0.2);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        }
+
+        .header h2 { 
+            margin: 0; font-size: 1.8rem; font-weight: 900;
+            background: var(--header-gradient);
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: shine-blue 3s linear infinite;
+            width: 250px;
+        }
+
+        .project-center-title {
+            text-align: center;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .main-title {
+            font-size: 2.2rem;
+            font-weight: 900;
+            letter-spacing: 3px;
+            background: var(--gold-gradient);
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: shine-gold 2.5s linear infinite;
+            text-transform: uppercase;
+            filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.3));
+        }
+
+        .sub-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #d4af37;
+            letter-spacing: 2px;
+            opacity: 0.9;
+            margin-top: -5px;
+        }
+
+        @keyframes shine-gold { 0% { background-position: 200% center; } 100% { background-position: -200% center; } }
+        @keyframes shine-blue { 0% { background-position: -200% center; } 100% { background-position: 200% center; } }
+
+        .status-block { display: flex; flex-direction: column; align-items: flex-end; width: 250px; }
+        .system-status { font-size: 0.8rem; font-weight: 800; display: flex; align-items: center; gap: 6px; color: var(--beyaz); margin-bottom: 4px; }
+        .status-dot { height: 10px; width: 10px; background-color: var(--status-color); border-radius: 50%; animation: pulse-glow 1.5s infinite; }
+        
+        @keyframes pulse-glow { 0% { box-shadow: 0 0 0 0 rgba(0, 255, 136, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(0, 255, 136, 0); } 100% { box-shadow: 0 0 0 0 rgba(0, 255, 136, 0); } }
+
+        .clock-controls { display: flex; align-items: center; gap: 15px; }
+        .digital-clock { font-size: 1.8rem; font-family: monospace; font-weight: bold; color: var(--beyaz); text-shadow: 0 0 10px var(--vurgu); }
+        .icon-btn { cursor: pointer; color: var(--beyaz); font-size: 1.2rem; opacity: 0.8; }
+
+        .table-container { flex-grow: 1; padding: 10px 30px; overflow-y: auto; }
+        table { width: 100%; border-collapse: separate; border-spacing: 0 12px; }
+        thead { position: sticky; top: 0; z-index: 100; background: var(--ana-renk); }
+        tr { display: flex; width: 100%; border-radius: 12px; min-height: 65px; background: rgba(128,128,128,0.08); border: 1px solid rgba(255,255,255,0.05); }
+        th, td { flex: 1; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; padding: 10px; }
+        th:nth-child(2), td:nth-child(2) { flex: 2.5; justify-content: flex-start; padding-left: 25px; } 
+        th:nth-child(5), td:nth-child(5) { flex: 1.2; font-weight: 800; color: var(--vurgu); }
+
+        .row-first { border: 2px solid var(--altin) !important; background: rgba(255, 215, 0, 0.1) !important; }
+        .sticky-leader { position: sticky; top: 55px; z-index: 99; background: var(--kart-bg) !important; }
+
+        .footer-info { display: flex; justify-content: space-between; padding: 12px 40px; font-size: 1rem; background: rgba(0,0,0,0.3); }
+
+        @media screen and (max-width: 1024px) {
+            .main-title { font-size: 1.5rem; }
+            .sub-title { font-size: 0.9rem; }
+            .header h2, .status-block { width: auto; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="board-container">
+    <div class="header">
+        <h2>SKOR TABLOSU</h2>
+        
+        <div class="project-center-title">
+            <div class="main-title">TÜRKİYE STEM YARIŞMASI</div>
+            <div class="sub-title">Balonlu Araba Yarışması</div>
+        </div>
+
+        <div class="status-block">
+            <div class="system-status"><span class="status-dot"></span> SİSTEM AKTİF</div>
+            <div class="clock-controls">
+                <div class="digital-clock" id="live-clock">00:00:00</div>
+                <i class="fas fa-lightbulb icon-btn" onclick="toggleTheme()"></i>
+                <i class="fas fa-expand icon-btn" onclick="toggleFullScreen()"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th style="flex:0.4">SIRA</th>
+                    <th style="justify-content:flex-start; padding-left:25px;">TAKIM ADI</th>
+                    <th>1. DENEME</th>
+                    <th>2. DENEME</th>
+                    <th style="flex:1.2">MAKSİMUM</th>
+                </tr>
+            </thead>
+            <tbody id="display-area"></tbody>
+        </table>
+    </div>
+
+    <div class="footer-info">
+        <span id="total-label" style="color:var(--altin)">Veriler Alınıyor...</span>
+        <span id="page-label">Sayfa 1 / 1</span>
+    </div>
+</div>
+
+<script>
+    let allEntries = [];
+    let currentPage = 0;
+    const othersPerPage = 9; 
+    let lastDataHash = ""; 
+
+    // Yeni CSV linki entegre edildi
+    const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT5xuL3Dm7IerMZkXzOWnbAMVEPwSGwjYwBz4btVezVPpg7ZjTGBkGyRmhZ6FTqpy07im70cNnMKUvb/pub?output=csv'; 
+
+    function toggleTheme() { document.body.classList.toggle('light-theme'); }
+    function toggleFullScreen() {
+        if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+        else if (document.exitFullscreen) document.exitFullscreen();
+    }
+    
+    function updateClock() { document.getElementById('live-clock').innerText = new Date().toLocaleTimeString('tr-TR'); }
+    setInterval(updateClock, 1000);
+
+    async function fetchData() {
+        try {
+            const response = await fetch(CSV_URL + '&cb=' + Date.now());
+            const rawData = await response.text();
+            if (rawData === lastDataHash) return;
+            lastDataHash = rawData;
+
+            const rows = rawData.split(/\r?\n/);
+            const separator = rows[0].includes(';') ? ';' : ',';
+            let tempEntries = [];
+
+            for (let i = 1; i < rows.length; i++) {
+                const cols = rows[i].split(separator);
+                if (cols[1] && cols[1].trim() !== "" && !cols[1].includes("Takım Adı")) {
+                    let maxVal = parseFloat(cols[4]?.replace(/"/g, '').replace(',', '.'));
+                    tempEntries.push({
+                        name: cols[1].replace(/"/g, '').trim(),
+                        d1: cols[2]?.replace(/"/g, '').trim() || '0',
+                        d2: cols[3]?.replace(/"/g, '').trim() || '0',
+                        max: isNaN(maxVal) ? 0 : maxVal
+                    });
+                }
+            }
+            // En yüksek puan en üstte (Maksimuma göre sıralama)
+            tempEntries.sort((a, b) => b.max - a.max);
+            
+            allEntries = tempEntries;
+            renderTable();
+        } catch (err) { console.error("Sync Error", err); }
+    }
+
+    function renderTable() {
+        const tbody = document.getElementById('display-area');
+        if (allEntries.length === 0) return;
+
+        const leader = allEntries[0];
+        let html = `<tr class="row-first sticky-leader">
+            <td style="flex:0.4"><i class="fas fa-trophy" style="color:var(--altin)"></i></td>
+            <td style="flex:2.5">${leader.name}</td>
+            <td>${leader.d1}</td>
+            <td>${leader.d2}</td>
+            <td style="flex:1.2">${leader.max}</td>
+        </tr>`;
+
+        const others = allEntries.slice(1);
+        const totalPages = Math.max(1, Math.ceil(others.length / othersPerPage));
+        if (currentPage >= totalPages) currentPage = 0;
+
+        const start = currentPage * othersPerPage;
+        others.slice(start, start + othersPerPage).forEach((item, index) => {
+            html += `<tr>
+                <td style="flex:0.4">${start + index + 2}</td>
+                <td style="flex:2.5">${item.name}</td>
+                <td>${item.d1}</td>
+                <td>${item.d2}</td>
+                <td style="flex:1.2">${item.max}</td>
+            </tr>`;
+        });
+
+        tbody.innerHTML = html;
+        document.getElementById('page-label').innerText = `Sayfa ${currentPage + 1} / ${totalPages}`;
+        document.getElementById('total-label').innerText = `Toplam ${allEntries.length} Takım`;
+    }
+
+    setInterval(() => {
+        const totalPages = Math.ceil((allEntries.length - 1) / othersPerPage);
+        if (totalPages > 1) {
+            if (currentPage === totalPages - 1) { currentPage = 0; fetchData(); } 
+            else { currentPage++; renderTable(); }
+        } else { fetchData(); }
+    }, 15000); 
+
+    fetchData();
+    updateClock();
+</script>
+</body>
+</html>
