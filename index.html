@@ -168,7 +168,6 @@
     const othersPerPage = 9; 
     let lastDataHash = ""; 
 
-    // Yeni CSV linki entegre edildi
     const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT5xuL3Dm7IerMZkXzOWnbAMVEPwSGwjYwBz4btVezVPpg7ZjTGBkGyRmhZ6FTqpy07im70cNnMKUvb/pub?output=csv'; 
 
     function toggleTheme() { document.body.classList.toggle('light-theme'); }
@@ -203,7 +202,6 @@
                     });
                 }
             }
-            // En yüksek puan en üstte (Maksimuma göre sıralama)
             tempEntries.sort((a, b) => b.max - a.max);
             
             allEntries = tempEntries;
@@ -219,9 +217,9 @@
         let html = `<tr class="row-first sticky-leader">
             <td style="flex:0.4"><i class="fas fa-trophy" style="color:var(--altin)"></i></td>
             <td style="flex:2.5">${leader.name}</td>
-            <td>${leader.d1}</td>
-            <td>${leader.d2}</td>
-            <td style="flex:1.2">${leader.max}</td>
+            <td>${leader.d1} cm</td>
+            <td>${leader.d2} cm</td>
+            <td style="flex:1.2">${leader.max} cm</td>
         </tr>`;
 
         const others = allEntries.slice(1);
@@ -233,9 +231,9 @@
             html += `<tr>
                 <td style="flex:0.4">${start + index + 2}</td>
                 <td style="flex:2.5">${item.name}</td>
-                <td>${item.d1}</td>
-                <td>${item.d2}</td>
-                <td style="flex:1.2">${item.max}</td>
+                <td>${item.d1} cm</td>
+                <td>${item.d2} cm</td>
+                <td style="flex:1.2">${item.max} cm</td>
             </tr>`;
         });
 
