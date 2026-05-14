@@ -55,7 +55,6 @@
             gap: 20px;
         }
 
-        /* Sağdaki ikonlarla uyumlu Portal Butonu */
         .portal-btn {
             background: none;
             border: none;
@@ -139,6 +138,16 @@
         .sticky-leader { position: sticky; top: 55px; z-index: 99; background: var(--kart-bg) !important; }
 
         .footer-info { display: flex; justify-content: space-between; padding: 12px 40px; font-size: 1rem; background: rgba(0,0,0,0.3); }
+
+        /* Yarışma Bekleniyor Yazısı */
+        .waiting-text {
+            font-style: italic;
+            font-size: 0.85rem;
+            opacity: 0.7;
+            margin-left: 10px;
+            font-weight: normal;
+            color: var(--altin);
+        }
 
         @media screen and (max-width: 1024px) {
             .main-title { font-size: 1.5rem; }
@@ -229,16 +238,29 @@
             for (let i = 1; i < rows.length; i++) {
                 const cols = rows[i].split(separator);
                 if (cols[1] && cols[1].trim() !== "" && !cols[1].includes("Takım Adı")) {
+                    let d1Raw = cols[2]?.replace(/"/g, '').trim() || '0';
+                    let d2Raw = cols[3]?.replace(/"/g, '').trim() || '0';
                     let maxVal = parseFloat(cols[4]?.replace(/"/g, '').replace(',', '.'));
+                    
+                    // Bekleme durumu kontrolü: Her iki deneme de 0 veya boşsa
+                    const isWaiting = (d1Raw === '0' || d1Raw === '') && (d2Raw === '0' || d2Raw === '');
+
                     tempEntries.push({
                         name: cols[1].replace(/"/g, '').trim(),
-                        d1: cols[2]?.replace(/"/g, '').trim() || '0',
-                        d2: cols[3]?.replace(/"/g, '').trim() || '0',
-                        max: isNaN(maxVal) ? 0 : maxVal
+                        d1: d1Raw,
+                        d2: d2Raw,
+                        max: isNaN(maxVal) || isWaiting ? -1 : maxVal, // Yarışmayanları en sona atmak için -1 veriyoruz
+                        isWaiting: isWaiting
                     });
                 }
             }
-            tempEntries.sort((a, b) => b.max - a.max);
+            
+            // SIRALAMA: Yarışanlar büyüktü küçüğe, yarışmayanlar (isWaiting) en sona
+            tempEntries.sort((a, b) => {
+                if (a.isWaiting !== b.isWaiting) return a.isWaiting ? 1 : -1;
+                if (!a.isWaiting) return b.max - a.max;
+                return a.name.localeCompare(b.name);
+            });
             
             allEntries = tempEntries;
             renderTable();
@@ -250,12 +272,15 @@
         if (allEntries.length === 0) return;
 
         const leader = allEntries[0];
+        const leaderStatusHtml = leader.isWaiting ? '<span class="waiting-text">Yarışma bekleniyor...</span>' : '';
+        const leaderIcon = leader.isWaiting ? '1' : '<i class="fas fa-trophy" style="color:var(--altin)"></i>';
+
         let html = `<tr class="row-first sticky-leader">
-            <td style="flex:0.4"><i class="fas fa-trophy" style="color:var(--altin)"></i></td>
-            <td style="flex:2.5">${leader.name}</td>
-            <td>${leader.d1} cm</td>
-            <td>${leader.d2} cm</td>
-            <td style="flex:1.2">${leader.max} cm</td>
+            <td style="flex:0.4">${leaderIcon}</td>
+            <td style="flex:2.5">${leader.name}${leaderStatusHtml}</td>
+            <td>${leader.isWaiting ? '-' : leader.d1 + ' cm'}</td>
+            <td>${leader.isWaiting ? '-' : leader.d2 + ' cm'}</td>
+            <td style="flex:1.2">${leader.isWaiting ? '-' : leader.max + ' cm'}</td>
         </tr>`;
 
         const others = allEntries.slice(1);
@@ -264,12 +289,14 @@
 
         const start = currentPage * othersPerPage;
         others.slice(start, start + othersPerPage).forEach((item, index) => {
+            const itemStatusHtml = item.isWaiting ? '<span class="waiting-text">Yarışma bekleniyor...</span>' : '';
+            
             html += `<tr>
                 <td style="flex:0.4">${start + index + 2}</td>
-                <td style="flex:2.5">${item.name}</td>
-                <td>${item.d1} cm</td>
-                <td>${item.d2} cm</td>
-                <td style="flex:1.2">${item.max} cm</td>
+                <td style="flex:2.5">${item.name}${itemStatusHtml}</td>
+                <td>${item.isWaiting ? '-' : item.d1 + ' cm'}</td>
+                <td>${item.isWaiting ? '-' : item.d2 + ' cm'}</td>
+                <td style="flex:1.2">${item.isWaiting ? '-' : item.max + ' cm'}</td>
             </tr>`;
         });
 
