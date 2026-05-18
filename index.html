@@ -3,8 +3,32 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <style type="text/css">
+    <title>STEM Balonlu Araba Canlı Skor Tablosu</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Montserrat', 'sans-serif'],
+                    },
+                    colors: {
+                        darkBg: '#0f111a',
+                        cardBg: '#161925',
+                        vurgu: '#00f2ff',
+                        altin: '#ffd700',
+                        gumus: '#c0c0c0',
+                        bronz: '#cd7f32',
+                        metin: '#e0e0e0',
+                        beyaz: '#ffffff',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
         :root {
             --ana-renk: #0f111a;
             --kart-bg: #161925;
@@ -51,7 +75,6 @@
             flex-shrink: 0;
         }
 
-        /* Başlık Efekti */
         .header h2 { 
             margin: 0; font-size: 1.8rem; font-weight: 900;
             background: var(--header-gradient);
@@ -80,7 +103,6 @@
         .status-block { display: flex; flex-direction: column; align-items: flex-end; width: 250px; }
         .digital-clock { font-size: 1.8rem; font-family: monospace; font-weight: bold; color: var(--beyaz); text-shadow: 0 0 10px var(--vurgu); }
         
-        /* Sistem Aktif Pulse */
         .system-status { font-size: 0.8rem; font-weight: 800; display: flex; align-items: center; gap: 8px; color: var(--beyaz); margin-top: 5px; }
         .status-dot { height: 10px; width: 10px; background-color: #00ff88; border-radius: 50%; animation: pulse-glow 1.5s infinite; }
         @keyframes pulse-glow { 0% { box-shadow: 0 0 0 0 rgba(0, 255, 136, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(0, 255, 136, 0); } 100% { box-shadow: 0 0 0 0 rgba(0, 255, 136, 0); } }
@@ -92,9 +114,11 @@
         th, td { flex: 1; text-align: center; font-size: 1.4rem; padding: 5px; display: flex; justify-content: center; align-items: center; }
         
         .col-rank { flex: 0.5; }
-        .col-name { flex: 2.5; justify-content: flex-start; padding-left: 30px; }
-        
-        /* Derece Renkleri */
+        .col-name { flex: 3; justify-content: flex-start; padding-left: 30px; }
+        .col-d1 { flex: 1; }
+        .col-d2 { flex: 1; }
+        .col-max { flex: 1.2; font-weight: 800; color: var(--vurgu); }
+
         .rank-1 { background: rgba(255, 215, 0, 0.15) !important; border: 2px solid var(--altin) !important; }
         .rank-2 { border-left: 6px solid var(--gumus) !important; }
         .rank-3 { border-left: 6px solid var(--bronz) !important; }
@@ -133,9 +157,9 @@
                 <tr style="background: none; border: none; font-weight: bold; color: var(--altin);">
                     <th class="col-rank">SIRA</th>
                     <th class="col-name">TAKIM ADI</th>
-                    <th>1. DENEME</th>
-                    <th>2. DENEME</th>
-                    <th style="flex:1.2">MAKSİMUM</th>
+                    <th class="col-d1">1. DENEME</th>
+                    <th class="col-d2">2. DENEME</th>
+                    <th class="col-max">MAKSİMUM MESAFE</th>
                 </tr>
             </thead>
             <tbody id="display-area"></tbody>
@@ -156,7 +180,9 @@
     let allEntries = [];
     let currentPage = 0;
     const itemsPerPage = 9; 
-    const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT5xuL3Dm7IerMZkXzOWnbAMVEPwSGwjYwBz4btVezVPpg7ZjTGBkGyRmhZ6FTqpy07im70cNnMKUvb/pub?output=csv';
+    
+    // Balonlu Araba (gid=800732920) sekmesinin doğrudan CSV olarak yayınlanan linki
+    const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRVfTp7wZiJaJ95n2H7NWiEWQIvn6SX7V6t8hK0FbsqCirFD-Os7KIMe4O1_Im3uOERV3VUYwdKcYod/pub?output=csv&gid=800732920';
 
     function toggleFullScreen() {
         if (!document.fullscreenElement) document.documentElement.requestFullscreen();
@@ -176,38 +202,74 @@
             let tempEntries = [];
 
             for (let i = 1; i < rows.length; i++) {
-                const cols = rows[i].split(separator);
-                if (cols[1] && cols[1].trim() !== "" && !cols[1].includes("Takım Adı")) {
-                    let d1Raw = cols[2]?.replace(/"/g, '').trim() || '0';
-                    let d2Raw = cols[3]?.replace(/"/g, '').trim() || '0';
-                    let maxVal = parseFloat(cols[4]?.replace(/"/g, '').replace(',', '.'));
+                if (!rows[i].trim()) continue;
+                
+                // Hücrelerdeki tırnak işaretlerini güvenli bir şekilde temizle
+                const cols = rows[i].split(separator).map(col => col.replace(/^"|"$/g, '').trim());
+                
+                // cols[0]: Sıra No | cols[1]: takimid | cols[2]: takimadi | cols[3]: 1. deneme | cols[4]: 2. deneme | cols[5]: maksimum mesafe
+                if (cols[2] && cols[2].trim() !== "" && !cols[2].toLowerCase().includes("takimadi")) {
+                    let teamIdVal = cols[1] ? cols[1].trim() : '';
+                    let nameVal = cols[2];
                     
-                    const isWaiting = (d1Raw === '0' || d1Raw === '') && (d2Raw === '0' || d2Raw === '');
-
+                    let d1Raw = cols[3] || '';
+                    let d2Raw = cols[4] || '';
+                    let maxRaw = cols[5] || '';
+                    
+                    // Ondalık sayılardaki virgülleri noktaya çevirerek güvenli sayısal dönüşüm yapıyoruz
+                    let d1Val = d1Raw !== '' ? parseFloat(d1Raw.replace(',', '.')) : NaN;
+                    let d2Val = d2Raw !== '' ? parseFloat(d2Raw.replace(',', '.')) : NaN;
+                    let maxVal = maxRaw !== '' ? parseFloat(maxRaw.replace(',', '.')) : NaN;
+                    
+                    // Eğer hiçbir veri girilmemişse (boşsa veya tanımsızsa) bekleme durumunu tetikliyoruz
+                    const isWaiting = isNaN(d1Val) && isNaN(d2Val) && isNaN(maxVal);
+                    
                     tempEntries.push({
-                        name: cols[1].replace(/"/g, '').trim(),
-                        d1: d1Raw,
-                        d2: d2Raw,
-                        max: isNaN(maxVal) || isWaiting ? -1 : maxVal,
+                        id: teamIdVal,
+                        name: nameVal,
+                        d1: isNaN(d1Val) ? 0 : d1Val,
+                        d2: isNaN(d2Val) ? 0 : d2Val,
+                        max: isNaN(maxVal) ? 0 : maxVal,
                         isWaiting: isWaiting
                     });
                 }
             }
-            
-            // Sıralama: Bekleyenler sona, diğerleri max değerine göre büyükten küçüğe
-            tempEntries.sort((a, b) => {
-                if (a.isWaiting !== b.isWaiting) return a.isWaiting ? 1 : -1;
-                if (!a.isWaiting) return b.max - a.max;
-                return a.name.localeCompare(b.name);
-            });
-            
             allEntries = tempEntries;
-        } catch (err) { console.error("Veri Hatası:", err); }
+            sortEntries();
+        } catch (err) { 
+            console.error("Veri okuma hatası:", err); 
+        }
+    }
+
+    function sortEntries() {
+        allEntries.sort((a, b) => {
+            // 1. KURAL: Lobi aşamasında bekleyenler (hiç sonuç girilmemiş olanlar) her zaman en alta gider.
+            if (a.isWaiting !== b.isWaiting) {
+                return a.isWaiting ? 1 : -1;
+            }
+            if (a.isWaiting && b.isWaiting) return 0;
+
+            // 2. KURAL: En yüksek maksimum mesafeye göre sıralanır (Büyükten küçüğe).
+            if (b.max !== a.max) {
+                return b.max - a.max;
+            }
+
+            // 3. KURAL: Maksimum mesafe de eşitse, diğer denemedeki en yüksek skora göre sıralanır (Eşitlik bozucu).
+            const otherBestA = Math.min(a.d1, a.d2);
+            const otherBestB = Math.min(b.d1, b.d2);
+            return otherBestB - otherBestA;
+        });
     }
 
     function renderTable() {
         const tbody = document.getElementById('display-area');
-        if (allEntries.length === 0) return;
+        
+        if (allEntries.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="5" class="p-10 text-center text-slate-500 italic font-bold text-lg">E-Tablo bağlantısı kuruluyor veya kayıtlı takım bulunmuyor...</td></tr>`;
+            document.getElementById('page-label').innerText = `Sayfa 0 / 0`;
+            document.getElementById('total-label').innerText = `Toplam 0 Takım`;
+            return;
+        }
 
         const totalPages = Math.ceil(allEntries.length / itemsPerPage);
         if (currentPage >= totalPages) currentPage = 0;
@@ -219,14 +281,15 @@
         pageItems.forEach((item, index) => {
             const globalRank = start + index + 1;
             const isWaiting = item.isWaiting;
-            const statusText = isWaiting ? '<span class="waiting-text">Yarışma bekleniyor...</span>' : '';
+            
+            let statusText = isWaiting ? '<span class="waiting-text">Yarışma bekleniyor...</span>' : '';
             
             let rankDisplay = globalRank;
             let specialClass = "";
             
-            // Derece Efektleri
+            // Sıralama madalyaları (Bekleyenler kürsü dışındadır)
             if (globalRank === 1 && !isWaiting) {
-                rankDisplay = '<i class="fas fa-trophy" style="color:var(--altin)"></i>';
+                rankDisplay = '<i class="fas fa-trophy text-2xl" style="color:var(--altin)"></i>';
                 specialClass = "rank-1";
             } else if (globalRank === 2 && !isWaiting) {
                 specialClass = "rank-2";
@@ -234,12 +297,18 @@
                 specialClass = "rank-3";
             }
 
+            // Takım id'si ile takım adını şık bir şekilde birleştiriyoruz
+            let formattedName = item.name;
+            if (item.id && !formattedName.startsWith(item.id)) {
+                formattedName = `${item.id} - ${formattedName}`;
+            }
+
             html += `<tr class="${specialClass}">
                 <td class="col-rank">${rankDisplay}</td>
-                <td class="col-name"><strong>${item.name}</strong>${statusText}</td>
-                <td>${isWaiting ? '-' : item.d1 + ' cm'}</td>
-                <td>${isWaiting ? '-' : item.d2 + ' cm'}</td>
-                <td style="flex:1.2; font-weight:800; color:var(--vurgu);">${isWaiting ? '-' : item.max + ' cm'}</td>
+                <td class="col-name"><strong>${formattedName}</strong>${statusText}</td>
+                <td class="col-d1">${isWaiting ? '-' : item.d1 + ' cm'}</td>
+                <td class="col-d2">${isWaiting ? '-' : item.d2 + ' cm'}</td>
+                <td class="col-max">${isWaiting ? '-' : item.max + ' cm'}</td>
             </tr>`;
         });
 
@@ -248,11 +317,11 @@
         document.getElementById('total-label').innerText = `Toplam ${allEntries.length} Takım`;
     }
 
-    // ANA DÖNGÜ: Sayfa geçişlerini ve veri yenilemeyi yönetir
     async function startCycle() {
         await fetchData(); 
         renderTable();    
 
+        // Her 12 saniyede bir sayfayı kaydırır ve arka planda yeni verileri çeker
         setInterval(async () => {
             if (allEntries.length === 0) return;
             const totalPages = Math.ceil(allEntries.length / itemsPerPage);
@@ -263,7 +332,7 @@
                 await fetchData(); 
             }
             renderTable(); 
-        }, 15000); // 15 Saniyede bir geçiş
+        }, 12000); 
     }
 
     startCycle();
